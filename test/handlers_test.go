@@ -38,45 +38,6 @@ func init() {
 	unitTest.SetLog(newLog)
 }
 
-func TestGetAgeHandler(t *testing.T) {
-	// make request params
-	param := make(map[string]interface{})
-	param["user_name"] = user.UserName
-	param["password"] = user.Password
-
-	resp := OrdinaryResponse{}
-
-	err := unitTest.TestHandlerUnMarshalResp("GET", "/get/age", "form", param, &resp)
-	if err != nil {
-		t.Errorf("TestGetAgeHandler: %v\n", err)
-		return
-	}
-
-	if resp.Errno != "0" {
-		t.Errorf("TestGetAgeHandler: response is not expected\n")
-		return
-	}
-}
-
-func TestGetPasswordHandler(t *testing.T) {
-	// make request params
-	param := make(map[string]interface{})
-	param["user_name"] = user.UserName
-
-	resp := OrdinaryResponse{}
-
-	err := unitTest.TestHandlerUnMarshalResp("GET", "/username/to/password", "form", param, &resp)
-	if err != nil {
-		t.Errorf("TestGetPasswordHandler: %v\n", err)
-		return
-	}
-
-	if resp.Errno != "0" {
-		t.Errorf("TestGetPasswordHandler: response is not expected\n")
-		return
-	}
-}
-
 func TestLoginHandler(t *testing.T) {
 	// make request params
 	param := make(map[string]interface{})
