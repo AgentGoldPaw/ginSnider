@@ -4,21 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/golden-protocol/gin_unit_test/methods"
+	"github.com/golden-protocol/gin_unit_test/mime"
 	"io"
-	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"strings"
-)
-
-const (
-	GET    = "GET"
-	POST   = "POST"
-	PUT    = "PUT"
-	DELETE = "DELETE"
-	PATCH  = "PATCH"
-	JSON   = "json"
-	FORM   = "form"
 )
 
 var (
@@ -26,58 +16,12 @@ var (
 	ErrMIMENotSupported   = errors.New("mime is not supported")
 )
 
-// make request which contains uploading file
-func MakeFileRequest(method, api, fileName, fieldName string, param interface{}) (request *http.Request, err error) {
+func MakeRequest(method, mimeType, api string, param interface{}) (request *http.Request, err error) {
 	method = strings.ToUpper(method)
-	if method != POST && method != PUT {
-		err = ErrMethodNotSupported
-		return
-	}
+	mimeType = strings.ToLower(mimeType)
 
-	// create form file
-	buf := &bytes.Buffer{}
-	bodyWriter := multipart.NewWriter(buf)
-	fileWriter, err := bodyWriter.CreateFormFile(fieldName, fileName)
-	if err != nil {
-		return
-	}
-
-	// read the file
-	fileBytes, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return
-	}
-
-	// read the file to the fileWriter
-	length, err := fileWriter.Write(fileBytes)
-	if err != nil {
-		return
-	}
-
-	bodyWriter.Close()
-
-	// make request
-	queryStr := MakeQueryStrFrom(param)
-	if queryStr != "" {
-		api += "?" + queryStr
-	}
-	request, err = http.NewRequest(string(method), api, buf)
-	if err != nil {
-		return
-	}
-
-	request.Header.Set("Content-Type", bodyWriter.FormDataContentType())
-	err = request.ParseMultipartForm(int64(length))
-	return
-}
-
-// make request
-func MakeRequest(method, mime, api string, param interface{}) (request *http.Request, err error) {
-	method = strings.ToUpper(method)
-	mime = strings.ToLower(mime)
-
-	switch mime {
-	case JSON:
+	switch mimeType {
+	case mime.JSON:
 		var (
 			contentBuffer *bytes.Buffer
 			jsonBytes     []byte
@@ -87,22 +31,22 @@ func MakeRequest(method, mime, api string, param interface{}) (request *http.Req
 			return
 		}
 		contentBuffer = bytes.NewBuffer(jsonBytes)
-		request, err = http.NewRequest(string(method), api, contentBuffer)
+		request, err = http.NewRequest(method, api, contentBuffer)
 		if err != nil {
 			return
 		}
 		request.Header.Set("Content-Type", "application/json;charset=utf-8")
-	case FORM:
+	case mime.FORM:
 		queryStr := MakeQueryStrFrom(param)
 		var buffer io.Reader
 
-		if (method == DELETE || method == GET) && queryStr != "" {
+		if (method == methods.DELETE || method == methods.GET) && queryStr != "" {
 			api += "?" + queryStr
 		} else {
 			buffer = bytes.NewReader([]byte(queryStr))
 		}
 
-		request, err = http.NewRequest(string(method), api, buffer)
+		request, err = http.NewRequest(method, api, buffer)
 		if err != nil {
 			return
 		}
